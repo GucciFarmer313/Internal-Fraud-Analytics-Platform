@@ -3,66 +3,99 @@
 [![Python](https://img.shields.io/badge/Python-3.9%2B-blue.svg)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Framework-Flask-green.svg)](https://flask.palletsprojects.com/)
 [![scikit-learn](https://img.shields.io/badge/ML-scikit--learn-orange.svg)](https://scikit-learn.org/)
+[![SQLite](https://img.shields.io/badge/Database-SQLite-lightblue.svg)](https://www.sqlite.org/)
 [![License](https://img.shields.io/badge/License-MIT-lightgrey.svg)](LICENSE)
 
-An automated AI/ML data analytics platform engineered to help insurance internal audit teams flag suspicious employee transaction patterns, evaluate policy refunds, and prioritize high-risk fraud investigations.
+An end-to-end data analytics platform that identifies suspicious employee behavior in an insurance sales context — built to demonstrate SQL, Python, pandas, machine learning, and dashboarding skills through a realistic, portfolio-ready fraud investigation workflow.
 
 ---
 
 ## 📌 Project Overview
 
-Insurance enterprises handle thousands of sales transactions, policy modifications, and customer refunds daily. Manual review processes cannot scale to cover every transaction, which means internal fraudulent activity — such as artificial sales commission padding, unauthorized policy refunds, or off-hours policy changes — often goes unnoticed until significant financial loss occurs.
+Insurance enterprises handle thousands of sales transactions, policy modifications, and customer refunds daily. Manual review processes cannot scale to cover every transaction, which means internal fraudulent activity — such as artificial refund abuse, duplicate customer accounts, or off-hours policy changes — often goes unnoticed until significant financial loss occurs.
 
-This platform ingests internal transaction logs, cleans and engineers behavioral feature indicators, trains machine learning classifiers to generate risk probabilities, and surfaces the results through an interactive **Flask web dashboard** so fraud investigators can prioritize their review queue.
+This platform combines a real-world dataset (IBM Telco Customer Churn) with synthetically generated Employee, Sales, Calls, Refunds, and Commissions data, deliberately injects realistic fraud scenarios, and applies unsupervised machine learning (Isolation Forest) to flag high-risk employees — with results validated against a known ground truth.
 
 ---
 
 ## ⚙️ Key Features
 
-- **Automated Data Ingestion & Cleaning** — standardizes raw transaction logs using `pandas` and `numpy`.
-- **Feature Engineering Engine** — flags anomalies such as out-of-hours transactions, unusual refund-to-sale ratios, and high-frequency policy changes per agent ID.
-- **Predictive Fraud Scoring** — uses `scikit-learn` models (Random Forest / Logistic Regression) to assign an objective risk score (0–100%) to every transaction.
-- **Visual Analytics Dashboard** — auto-generates distribution graphs using `matplotlib` and `seaborn` directly on the Flask dashboard.
-- **Batch Analysis Interface** — simple web UI supporting file uploads for real-time risk evaluation.
+- **Data Warehouse Layer** — 7 relational tables (Employees, Customers, Sales, Calls, Refunds, Commissions, Fraud Ground Truth) loaded into a SQLite database with indexed joins.
+- **Synthetic Fraud Injection** — deliberately planted, realistic fraud patterns: abnormal refund volume, after-hours sales activity, and duplicate customer accounts.
+- **SQL-Based Feature Engineering** — per-employee risk metrics (refund rate, after-hours rate, sales volume) calculated via SQL aggregation.
+- **Unsupervised Anomaly Detection** — scikit-learn's Isolation Forest flags high-risk employees without needing pre-labeled fraud data.
+- **Validated Results** — model output checked against ground truth: **100% recall**, catching all planted fraudulent employees within the top-ranked results.
+- **Interactive Dashboard** *(in progress)* — Flask web app with KPIs, charts, and filters to surface flagged employees.
 
 ---
 
 ## 🏗️ System Architecture & Workflow
 
 ```
-┌───────────────────────────────┐
-│ 1. INPUT                      │
-│ - Raw Sales & Policy CSVs     │
-│ - Employee IDs & Timestamps   │
-└───────────────┬───────────────┘
-                │
-                ▼
-┌───────────────────────────────┐
-│ 2. PROCESSING                 │
-│ - pandas: Data Cleaning       │
-│ - sklearn: Feature Scaling    │
-│ - ML Model: Fraud Probability │
-└───────────────┬───────────────┘
-                │
-                ▼
-┌───────────────────────────────┐
-│ 3. OUTPUT                     │
-│ - Fraud Risk Probability Score│
-│ - Seaborn / Matplotlib Charts │
-│ - Flask Web Dashboard         │
-└───────────────────────────────┘
+┌─────────────────────────────────────────────┐
+│ 1. DATA GENERATION                           │
+│ - Real: IBM Telco Customer Churn (Customers) │
+│ - Synthetic: Employees, Sales, Calls,        │
+│   Refunds, Commissions (Faker + pandas)      │
+│ - Deliberate fraud scenario injection        │
+└───────────────────┬───────────────────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────────┐
+│ 2. DATA WAREHOUSE                            │
+│ - SQLite database (fraud_analytics.db)       │
+│ - Indexed on EmployeeID / CustomerID / SaleID│
+└───────────────────┬───────────────────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────────┐
+│ 3. ANALYTICS LAYER                           │
+│ - SQL aggregation: refund rate, after-hours  │
+│   rate, sales volume per employee            │
+└───────────────────┬───────────────────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────────┐
+│ 4. MACHINE LEARNING LAYER                    │
+│ - scikit-learn Isolation Forest              │
+│ - Anomaly scoring + fraud flagging           │
+│ - Validated against ground truth             │
+└───────────────────┬───────────────────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────────┐
+│ 5. DASHBOARD LAYER                           │
+│ - Flask web app: KPIs, charts, fraud alerts  │
+│ - Power BI: supplementary BI dashboard       │
+└─────────────────────────────────────────────┘
 ```
+
+---
+
+## 📊 Model Results
+
+The Isolation Forest model was validated against a known set of 5 deliberately planted fraudulent employees:
+
+| Metric | Result |
+|---|---|
+| Recall | 100% (5/5 planted fraud cases caught) |
+| Precision | 62.5% (5 true positives / 8 flagged) |
+| F1 Score | 76.9% |
+
+All 5 planted fraudulent employees ranked in the **top 5** highest anomaly scores out of 80 total employees. The 3 false positives are documented and analyzed as realistic borderline cases rather than tuned away — see `docs/project_charter.md` for discussion.
 
 ---
 
 ## 🛠️ Tech Stack & Dependencies
 
 - **Language:** Python 3.9+
-- **Data Processing & Analytics:** `pandas`, `numpy`
-- **Machine Learning:** `scikit-learn`
-- **Data Visualization:** `matplotlib`, `seaborn`
+- **Data Generation:** `pandas`, `Faker`
+- **Database:** SQLite
+- **Machine Learning:** `scikit-learn` (Isolation Forest)
+- **Data Visualization:** `matplotlib`, `seaborn`, Chart.js
 - **Web Framework:** `Flask`
-- **Version Control & Management:** Git, GitHub, JIRA
+- **BI Tool:** Power BI
+- **Version Control:** Git, GitHub
 - **IDE:** Visual Studio Code (VS Code)
 
 ---
@@ -71,16 +104,18 @@ This platform ingests internal transaction logs, cleans and engineers behavioral
 
 ```
 Internal-Fraud-Analytics-Platform/
-├── .github/            # CI/CD workflows and issue templates
-├── data/               # Raw and processed transaction data
-├── docs/               # Project charter, architecture diagrams
-├── notebooks/          # Exploratory analysis and model prototyping
-├── src/                # Core source code (data processing, modeling, visualization)
-├── static/             # CSS and static assets for the Flask dashboard
-├── templates/          # HTML templates for the Flask dashboard
-├── tests/              # Unit and integration tests
-├── app.py              # Flask application entry point
-├── requirements.txt    # Python dependencies
+├── .github/             # CI/CD workflows and issue templates
+├── data/                # Raw, processed, and generated datasets + SQLite DB
+├── docs/                # Project charter, architecture diagrams
+├── notebooks/           # Exploratory analysis and model prototyping
+├── scripts/             # Data generation, fraud injection, SQL, ML pipeline
+├── models/              # Saved trained model files
+├── reports/             # Generated reports and exports
+├── static/              # CSS and static assets for the Flask dashboard
+├── templates/           # HTML templates for the Flask dashboard
+├── tests/                # Unit and integration tests
+├── app.py               # Flask application entry point
+├── requirements.txt     # Python dependencies
 ├── LICENSE
 └── README.md
 ```
@@ -89,11 +124,9 @@ Internal-Fraud-Analytics-Platform/
 
 ## 🚀 Quickstart & Installation
 
-Follow these steps to set up and run the project locally.
-
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/GucciFarmer313/internal-sales-fraud-detection.git
+git clone https://github.com/your-username/internal-sales-fraud-detection.git
 cd internal-sales-fraud-detection
 ```
 
@@ -111,7 +144,20 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 4. Run the Application
+### 4. Generate the Dataset and Run the Pipeline
+```bash
+python scripts/Generate_employees.py
+python scripts/Generate_sales.py
+python scripts/Generate_calls.py
+python scripts/Generate_refunds.py
+python scripts/Generate_commissions.py
+python scripts/Inject_fraud_scenarios.py
+python scripts/load_to_sqlite.py
+python scripts/fraud_risk_score.py
+python scripts/isolation_forest_model.py
+```
+
+### 5. Run the Dashboard
 ```bash
 python app.py
 ```
@@ -120,18 +166,16 @@ The dashboard will be available at `http://localhost:5000`.
 
 ---
 
-## 📊 Usage
-
-1. Upload a transaction CSV file through the dashboard.
-2. The platform cleans the data and engineers risk-relevant features automatically.
-3. Each transaction is scored with a fraud risk probability.
-4. Review flagged high-risk transactions and supporting charts directly in the dashboard.
-
----
-
 ## 🧭 Project Status
 
-**Phase 1: Project Planning** — currently defining the business problem, project charter, and data requirements. See `docs/project_charter.md` for details. Model development and dashboard implementation follow in later phases.
+- ✅ Phase 1: Project Planning — complete
+- ✅ Data Warehouse Layer — complete
+- ✅ Analytics Layer (SQL feature engineering) — complete
+- ✅ Machine Learning Layer (Isolation Forest, validated) — complete
+- 🔄 Dashboard Layer (Flask) — in progress
+- ⏳ Power BI supplementary dashboard — planned
+
+See `docs/project_charter.md` for full project scope, objectives, and data source details.
 
 ---
 
