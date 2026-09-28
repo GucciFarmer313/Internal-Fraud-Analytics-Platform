@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Internal Sales Fraud Analytics</title>
+
+    <style>
+.section-title {
+    margin-top: 40px;
+    margin-bottom: 15px;
+}
+
+.table-container {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th {
+    text-align: left;
+    padding: 12px;
+    background-color: #f1f3f5;
+}
+
+td {
+    padding: 12px;
+    border-bottom: 1px solid #ddd;
+}
+
+.status-flagged {
+    font-weight: bold;
+}   
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f8;
+            margin: 0;
+            padding: 30px;
+        }
+
+        h1 {
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            color: #555;
+            margin-bottom: 30px;
+        }
+
+        .kpi-container {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .kpi-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 200px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        .kpi-card h3 {
+            margin-top: 0;
+            color: #555;
+            font-size: 15px;
+        }
+
+        .kpi-value {
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .filter-container {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+#employeeSearch {
+    width: 350px;
+    max-width: 100%;
+    padding: 12px 15px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    box-sizing: border-box;
+}
+
+#employeeSearch:focus {
+    outline: none;
+    border-color: #555;
+}
+
+#regionFilter {
+    padding: 12px 15px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background-color: white;
+    cursor: pointer;
+    min-width: 150px;
+}
+
+#regionFilter:focus {
+    outline: none;
+    border-color: #555;
+}
+.review-btn {
+    padding: 8px 14px;
+    background-color: #1f4e78;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.review-btn:hover {
+    background-color: #163a5c;
+}
+    </style>
+
+</head>
+
+<body>
+
+    <h1>Internal Sales Fraud Analytics Dashboard</h1>
+
+    <p class="subtitle">
+        Fraud monitoring and investigation support platform
+    </p>
+
+
+    <div class="kpi-container">
+
+        <div class="kpi-card">
+            <h3>Employees Analyzed</h3>
+            <div class="kpi-value" id="employeeCount">-</div>
+        </div>
+
+
+        <div class="kpi-card">
+            <h3>Flagged Fraud Leads</h3>
+            <div class="kpi-value" id="flaggedCount">-</div>
+        </div>
+
+
+        <div class="kpi-card">
+            <h3>Total Sales</h3>
+            <div class="kpi-value" id="totalSales">-</div>
+        </div>
+
+
+        <div class="kpi-card">
+            <h3>Total Refunds</h3>
+            <div class="kpi-value" id="totalRefunds">-</div>
+        </div>
+
+    </div>
+<h2 class="section-title">Fraud Investigation Queue</h2>
+<div class="filter-container">
+    <input
+        type="text"
+        id="employeeSearch"
+        placeholder="Search by employee name or ID..."
+    >
+    <select id="regionFilter">
+    <option value="">All Regions</option>
+    <option value="Northeast">Northeast</option>
+    <option value="Southeast">Southeast</option>
+    <option value="Southwest">Southwest</option>
+    <option value="West">West</option>
+</select>
+</div>
+
+<div class="table-container">
+
+    <table id="fraudTable">
+
+        <thead>
+            <tr>
+                <th>Employee ID</th>
+                <th>Employee</th>
+                <th>Role</th>
+                <th>Region</th>
+                <th>Sales</th>
+                <th>After-Hours Rate</th>
+                <th>Refund Rate</th>
+                <th>Anomaly Score</th>
+                <th>Risk Indicators</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+
+        <tbody id="fraudTableBody">
+        </tbody>
+
+    </table>
+
+</div>
+<div id="investigationPanel" style="display: none;">
+
+    <h2 class="section-title">Employee Investigation Details</h2>
+
+    <div class="investigation-card">
+        <h3 id="investigationEmployee">Employee</h3>
+        <p id="investigationRole"></p>
+        <p id="investigationRegion"></p>
+        <p id="investigationRisk"></p>
+    </div>
+<div class="investigation-metrics">
+
+    <div class="investigation-metric">
+        <span>Total Sales</span>
+        <strong id="investigationSales">--</strong>
+    </div>
+
+    <div class="investigation-metric">
+        <span>Refund Rate</span>
+        <strong id="investigationRefundRate">--</strong>
+    </div>
+
+    <div class="investigation-metric">
+        <span>After-Hours Rate</span>
+        <strong id="investigationAfterHours">--</strong>
+    </div>
+
+    <div class="investigation-metric">
+        <span>Anomaly Score</span>
+        <strong id="investigationAnomaly">--</strong>
+    </div>
+
+</div>
+</div>
+<script>
+
+fetch('/api/employees')
+
+    .then(response => response.json())
+
+    .then(data => {
+
+        const employees = data.length;
+
+        const flagged = data.filter(
+            employee => employee.Is_Flagged_Fraud === "Yes"
+        ).length;
+
+        const sales = data.reduce(
+            (sum, employee) => sum + employee.TotalSalesCount,
+            0
+        );
+
+        const refunds = data.reduce(
+            (sum, employee) => sum + employee.TotalRefundCount,
+            0
+        );
+
+
+        document.getElementById("employeeCount").textContent =
+            employees.toLocaleString();
+
+        document.getElementById("flaggedCount").textContent =
+            flagged.toLocaleString();
+
+        document.getElementById("totalSales").textContent =
+            sales.toLocaleString();
+
+        document.getElementById("totalRefunds").textContent =
+            refunds.toLocaleString();
+
+            const flaggedEmployees = data
+    .filter(employee => employee.Is_Flagged_Fraud === "Yes")
+    .sort((a, b) => a.Anomaly_Score - b.Anomaly_Score);
+
+const tableBody = document.getElementById("fraudTableBody");
+
+flaggedEmployees.forEach(employee => {
+
+    const row = document.createElement("tr");
+    const riskIndicators = [];
+
+if (employee.RefundRate >= 0.50) {
+    riskIndicators.push("High Refund Activity");
+}
+
+if (employee.AfterHoursRate >= 0.25) {
+    riskIndicators.push("High After-Hours Activity");
+}
+
+if (employee.Anomaly_Score < 0) {
+    riskIndicators.push("ML Anomaly");
+}
+
+const riskText = riskIndicators.join(" | ");
+
+    row.innerHTML = `
+        <td>${employee.EmployeeID}</td>
+        <td>${employee.EmployeeName}</td>
+        <td>${employee.Role}</td>
+        <td>${employee.Region}</td>
+        <td>${employee.TotalSalesCount.toLocaleString()}</td>
+        <td>${(employee.AfterHoursRate * 100).toFixed(1)}%</td>
+        <td>${(employee.RefundRate * 100).toFixed(1)}%</td>
+        <td>${employee.Anomaly_Score.toFixed(3)}</td>
+<td>${riskText}</td>
+<td>
+    <button class="review-btn" data-employee-id="${employee.EmployeeID}">
+        Review
+    </button>
+</td>
+    `;
+
+    tableBody.appendChild(row);
+
+    const reviewButton = row.querySelector(".review-btn");
+
+reviewButton.addEventListener("click", function () {
+    const panel = document.getElementById("investigationPanel");
+
+    document.getElementById("investigationEmployee").textContent =
+        `${employee.EmployeeName} (${employee.EmployeeID})`;
+
+    document.getElementById("investigationRole").textContent =
+        `Role: ${employee.Role}`;
+
+    document.getElementById("investigationRegion").textContent =
+        `Region: ${employee.Region}`;
+
+    document.getElementById("investigationRisk").textContent =
+        `Risk Indicators: ${riskText}`;
+// Investigation metrics
+document.getElementById("investigationSales").textContent =
+    employee.TotalSalesCount.toLocaleString();
+
+document.getElementById("investigationRefundRate").textContent =
+    `${(employee.RefundRate * 100).toFixed(1)}%`;
+
+document.getElementById("investigationAfterHours").textContent =
+    `${(employee.AfterHoursRate * 100).toFixed(1)}%`;
+
+document.getElementById("investigationAnomaly").textContent =
+    employee.Anomaly_Score.toFixed(3);
+    panel.style.display = "block";
+
+    panel.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+    });
+});
+
+});
+
+    })
+
+    .catch(error => {
+        console.error("Error loading fraud data:", error);
+    });
+
+    const employeeSearch = document.getElementById("employeeSearch");
+const regionFilter = document.getElementById("regionFilter");
+
+function filterFraudTable() {
+    const searchValue = employeeSearch.value.toLowerCase();
+    const selectedRegion = regionFilter.value.toLowerCase();
+
+    const rows = document.querySelectorAll("#fraudTableBody tr");
+
+    rows.forEach(row => {
+        const employeeID = row.cells[0].textContent.toLowerCase();
+        const employeeName = row.cells[1].textContent.toLowerCase();
+        const region = row.cells[3].textContent.toLowerCase();
+
+        const matchesSearch =
+            employeeID.includes(searchValue) ||
+            employeeName.includes(searchValue);
+
+        const matchesRegion =
+            selectedRegion === "" ||
+            region === selectedRegion;
+
+        if (matchesSearch && matchesRegion) {
+            row.style.display = "";
+        } else {
+            row.style.display = "none";
+        }
+    });
+}
+
+employeeSearch.addEventListener("input", filterFraudTable);
+regionFilter.addEventListener("change", filterFraudTable);
+</script>
+
+</body>
+</html>
