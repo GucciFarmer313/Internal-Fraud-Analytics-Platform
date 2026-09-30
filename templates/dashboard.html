@@ -130,6 +130,79 @@ td {
 .review-btn:hover {
     background-color: #163a5c;
 }
+.evidence-summary {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.evidence-card {
+    background-color: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 18px;
+}
+
+.evidence-card span {
+    display: block;
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 8px;
+}
+
+.evidence-card strong {
+    display: block;
+    font-size: 22px;
+    font-weight: 700;
+}
+
+@media (max-width: 900px) {
+    .evidence-summary {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+.refund-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    background-color: #fde8e8;
+    color: #b42318;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.no-refund-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    font-size: 12px;
+    font-weight: 600;
+}
+.after-hours-badge {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    background-color: #fff3cd;
+    color: #856404;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.multiple-refund-badge {
+    display: inline-block;
+    margin-top: 4px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    background-color: #fce8e6;
+    color: #b3261e;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
     </style>
 
 </head>
@@ -242,6 +315,72 @@ td {
         <strong id="investigationAnomaly">--</strong>
     </div>
 
+</div><!-- Transaction Evidence Section -->
+<div class="transaction-evidence">
+
+    <h3>Transaction Evidence</h3>
+
+    <p id="transactionEmployee">
+        Review the sales and refund transactions associated with this employee.
+    </p>
+<!-- Transaction Evidence Summary -->
+<div class="evidence-summary">
+
+    <div class="evidence-card">
+        <span>Transactions</span>
+        <strong id="evidenceTransactions">--</strong>
+    </div>
+
+    <div class="evidence-card">
+        <span>Refunded Transactions</span>
+        <strong id="evidenceRefunds">--</strong>
+    </div>
+
+    <div class="evidence-card">
+        <span>After-Hours Sales</span>
+        <strong id="evidenceAfterHours">--</strong>
+    </div>
+
+    <div class="evidence-card">
+        <span>Total Refund Amount</span>
+        <strong id="evidenceRefundAmount">--</strong>
+    </div>
+
+</div>
+
+<div class="transaction-filter-container">
+    <label for="transactionFilter">Show:</label>
+
+    <select id="transactionFilter">
+        <option value="all">All Transactions</option>
+        <option value="refunded">Refunded</option>
+        <option value="after-hours">After Hours</option>
+        <option value="multiple-refunds">Multiple Refunds</option>
+    </select>
+</div>
+
+    <div class="table-container">
+        <table id="transactionTable">
+
+            <thead>
+                <tr>
+                    <th>Sale ID</th>
+                    <th>Sale Date</th>
+                    <th>Sale Amount</th>
+                    <th>Refund Amount</th>
+                    <th>Refund Date</th>
+                    <th>Refund Reason</th>
+                    <th>Payment Method</th>
+                </tr>
+            </thead>
+
+            <tbody id="transactionTableBody">
+                <!-- Transaction evidence will be inserted here -->
+            </tbody>
+
+        </table>
+    </div>
+
 </div>
 </div>
 <script>
@@ -352,7 +491,145 @@ document.getElementById("investigationAfterHours").textContent =
     `${(employee.AfterHoursRate * 100).toFixed(1)}%`;
 
 document.getElementById("investigationAnomaly").textContent =
-    employee.Anomaly_Score.toFixed(3);
+    employee.Anomaly_Score.toFixed(3);// Load transaction evidence for selected employee
+const transactionTableBody =
+    document.getElementById("transactionTableBody");
+
+transactionTableBody.innerHTML = "";
+
+fetch(`/api/investigation/${employee.EmployeeID}`)
+    .then(response => response.json())
+    .then(transactions => {
+
+        // Calculate transaction evidence summary
+const uniqueSaleIDs = new Set(
+    transactions.map(transaction => transaction.SaleID)
+);
+
+const totalTransactions = uniqueSaleIDs.size;
+
+const refundedTransactions = transactions.filter(
+    transaction => transaction.RefundAmount
+).length;
+
+const totalRefundAmount = transactions.reduce(
+    (sum, transaction) =>
+        sum + (Number(transaction.RefundAmount) || 0),
+    0
+);
+
+const afterHoursSaleIDs = new Set(
+    transactions
+        .filter(transaction => {
+            const saleDate = new Date(transaction.SaleDate);
+            const hour = saleDate.getHours();
+
+            return hour >= 23 || hour < 4;
+        })
+        .map(transaction => transaction.SaleID)
+);
+
+const afterHoursSales = afterHoursSaleIDs.size;
+
+// Display evidence summary
+document.getElementById("evidenceTransactions").textContent =
+    totalTransactions.toLocaleString();
+
+document.getElementById("evidenceRefunds").textContent =
+    refundedTransactions.toLocaleString();
+
+document.getElementById("evidenceAfterHours").textContent =
+    afterHoursSales.toLocaleString();
+
+document.getElementById("evidenceRefundAmount").textContent =
+    `$${totalRefundAmount.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    })}`;
+    // Count refund events for each Sale ID
+const refundCountBySaleID = {};
+
+transactions.forEach(transaction => {
+
+    if (transaction.RefundAmount) {
+
+        const saleID = transaction.SaleID;
+
+        refundCountBySaleID[saleID] =
+            (refundCountBySaleID[saleID] || 0) + 1;
+    }
+
+});
+        transactions.forEach(transaction => {
+
+            const transactionRow = document.createElement("tr");
+const refundCount =
+    refundCountBySaleID[transaction.SaleID] || 0;
+
+transactionRow.dataset.multipleRefunds =
+    refundCount > 1 ? "yes" : "no";
+
+const multipleRefundBadge =
+    refundCount > 1
+        ? `<span class="multiple-refund-badge">
+               Multiple Refunds (${refundCount})
+           </span>`
+        : "";
+
+            const refundAmount = transaction.RefundAmount
+    ? `<span class="refund-badge">
+           $${Number(transaction.RefundAmount).toFixed(2)} Refunded
+       </span>`
+    : `<span class="no-refund-badge">
+           No Refund
+       </span>`;
+
+            const refundDate = transaction.RefundDate
+                ? transaction.RefundDate
+                : "-";
+
+            const refundReason = transaction.Reason
+                ? transaction.Reason
+                : "-";
+
+                const saleDate = new Date(transaction.SaleDate);
+const saleHour = saleDate.getHours();
+transactionRow.dataset.afterHours =
+    (saleHour >= 23 || saleHour < 4) ? "yes" : "no";
+
+const afterHoursBadge =
+    saleHour >= 23 || saleHour < 4
+        ? `<span class="after-hours-badge">After Hours</span>`
+        : "";
+            transactionRow.innerHTML = `
+                <td>
+    ${transaction.SaleID}
+    ${multipleRefundBadge}
+</td>
+                <td>
+    ${transaction.SaleDate}
+    ${afterHoursBadge}
+</td>
+                <td>$${Number(transaction.SaleAmount).toFixed(2)}</td>
+                <td>${refundAmount}</td>
+                <td>${refundDate}</td>
+                <td>${refundReason}</td>
+                <td>${transaction.PaymentMethod}</td>
+            `;
+
+            transactionTableBody.appendChild(transactionRow);
+transactionRow.dataset.refunded =
+    transaction.RefundAmount ? "yes" : "no";
+
+        });
+
+    })
+    .catch(error => {
+        console.error(
+            "Error loading transaction evidence:",
+            error
+        );
+    });
     panel.style.display = "block";
 
     panel.scrollIntoView({
@@ -371,6 +648,37 @@ document.getElementById("investigationAnomaly").textContent =
 
     const employeeSearch = document.getElementById("employeeSearch");
 const regionFilter = document.getElementById("regionFilter");
+
+const transactionFilter = document.getElementById("transactionFilter");
+
+transactionFilter.addEventListener("change", function () {
+
+    const selectedFilter = transactionFilter.value;
+    const transactionRows =
+        document.querySelectorAll("#transactionTableBody tr");
+
+    transactionRows.forEach(row => {
+
+        if (selectedFilter === "all") {
+            row.style.display = "";
+        }
+
+        else if (selectedFilter === "refunded") {
+            row.style.display =
+                row.dataset.refunded === "yes" ? "" : "none";
+        }
+        else if (selectedFilter === "after-hours") {
+    row.style.display =
+        row.dataset.afterHours === "yes" ? "" : "none";
+}
+else if (selectedFilter === "multiple-refunds") {
+    row.style.display =
+        row.dataset.multipleRefunds === "yes" ? "" : "none";
+}
+
+    });
+
+});
 
 function filterFraudTable() {
     const searchValue = employeeSearch.value.toLowerCase();
