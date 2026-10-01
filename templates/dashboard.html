@@ -203,6 +203,46 @@ td {
     font-weight: 600;
     white-space: nowrap;
 }
+.risk-normal {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.risk-review {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    background-color: #fff3cd;
+    color: #856404;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.risk-high {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    background-color: #fde8e8;
+    color: #c62828;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.risk-critical {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    background-color: #c62828;
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+}
+
     </style>
 
 </head>
@@ -356,6 +396,11 @@ td {
         <option value="refunded">Refunded</option>
         <option value="after-hours">After Hours</option>
         <option value="multiple-refunds">Multiple Refunds</option>
+        <option value="critical">Critical Risk</option>
+        <option value="high">High Risk</option>
+        <option value="review">Review</option>
+        <option value="normal">Normal</option>
+
     </select>
 </div>
 
@@ -371,6 +416,7 @@ td {
                     <th>Refund Date</th>
                     <th>Refund Reason</th>
                     <th>Payment Method</th>
+                    <th>Risk Level</th>
                 </tr>
             </thead>
 
@@ -601,6 +647,28 @@ const afterHoursBadge =
     saleHour >= 23 || saleHour < 4
         ? `<span class="after-hours-badge">After Hours</span>`
         : "";
+
+let transactionRisk = "Normal";
+
+if (refundCount > 1 && (saleHour >= 23 || saleHour < 4)) {
+    transactionRisk = "Critical";
+}
+else if (refundCount > 1) {
+    transactionRisk = "High";
+}
+else if (transaction.RefundAmount && (saleHour >= 23 || saleHour < 4)) {
+    transactionRisk = "High";
+}
+else if (transaction.RefundAmount || (saleHour >= 23 || saleHour < 4)) {
+    transactionRisk = "Review";
+}
+const riskBadge = `
+    <span class="risk-${transactionRisk.toLowerCase()}">
+        ${transactionRisk}
+    </span>
+`;
+transactionRow.dataset.risk = transactionRisk.toLowerCase();
+
             transactionRow.innerHTML = `
                 <td>
     ${transaction.SaleID}
@@ -615,6 +683,7 @@ const afterHoursBadge =
                 <td>${refundDate}</td>
                 <td>${refundReason}</td>
                 <td>${transaction.PaymentMethod}</td>
+                <td>${riskBadge}</td>
             `;
 
             transactionTableBody.appendChild(transactionRow);
@@ -675,7 +744,15 @@ else if (selectedFilter === "multiple-refunds") {
     row.style.display =
         row.dataset.multipleRefunds === "yes" ? "" : "none";
 }
-
+else if (
+    selectedFilter === "critical" ||
+    selectedFilter === "high" ||
+    selectedFilter === "review" ||
+    selectedFilter === "normal"
+) {
+    row.style.display =
+        row.dataset.risk === selectedFilter ? "" : "none";
+}
     });
 
 });
