@@ -104,6 +104,18 @@ for idx in sales_indices_to_flag:
     original_date = df_sales.loc[idx, "SaleDate"]
     new_time = random_after_hours_time()
     df_sales.loc[idx, "SaleDate"] = datetime.combine(original_date.date(), new_time)
+    sale_id = df_sales.loc[idx, "SaleID"]
+    new_sale_date = df_sales.loc[idx, "SaleDate"]
+
+    refund_mask = df_refunds["SaleID"] == sale_id
+
+    for refund_idx in df_refunds[refund_mask].index:
+        refund_date = df_refunds.loc[refund_idx, "RefundDate"]
+
+        if refund_date < new_sale_date + timedelta(days=1):
+            df_refunds.loc[refund_idx, "RefundDate"] = (
+                new_sale_date + timedelta(days=1)
+            )
 
 for emp_id in suspicious_employees:
     count = len([i for i in sales_indices_to_flag if df_sales.loc[i, "EmployeeID"] == emp_id])
