@@ -3,7 +3,7 @@
 
 import os
 import pandas as pd
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, request
 
 app = Flask(__name__)
 
@@ -85,7 +85,26 @@ def api_investigation(employee_id):
         evidence.fillna("").to_dict(orient="records")
     )
 
+@app.route("/api/investigation/save", methods=["POST"])
+def save_investigation():
 
+    data = request.get_json()
+
+    employee_id = data.get("employee_id")
+    case_status = data.get("case_status")
+    case_disposition = data.get("case_disposition")
+    analyst_notes = data.get("analyst_notes")
+
+    print("Investigation Decision Received:")
+    print("Employee ID:", employee_id)
+    print("Case Status:", case_status)
+    print("Case Disposition:", case_disposition)
+    print("Analyst Notes:", analyst_notes)
+
+    return jsonify({
+        "success": True,
+        "message": "Investigation decision received"
+    })
 if __name__ == "__main__":
     app.run(debug=True)
     

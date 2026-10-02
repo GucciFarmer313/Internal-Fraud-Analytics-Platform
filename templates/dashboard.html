@@ -427,6 +427,49 @@ td {
         </table>
     </div>
 
+<!-- Investigation Decision Section -->
+<div class="investigation-decision">
+    <h2>Investigation Decision</h2>
+
+    <p>
+        Document the analyst's review and determine the appropriate action for this case.
+    </p>
+    <div class="decision-field">
+    <label for="caseStatus"><strong>Case Status</strong></label>
+
+    <select id="caseStatus">
+        <option value="open">Open</option>
+        <option value="under-review">Under Review</option>
+        <option value="escalated">Escalated</option>
+        <option value="closed">Closed</option>
+    </select>
+</div>
+<div class="decision-field">
+    <label for="caseDisposition"><strong>Case Disposition</strong></label>
+
+    <select id="caseDisposition">
+        <option value="">Select disposition</option>
+        <option value="no-fraud">No Fraud Identified</option>
+        <option value="needs-review">Further Review Required</option>
+        <option value="suspected-fraud">Suspected Fraud</option>
+        <option value="confirmed-fraud">Confirmed Fraud</option>
+    </select>
+</div>
+<div class="decision-field">
+    <label for="analystNotes"><strong>Analyst Notes</strong></label>
+
+    <textarea
+        id="analystNotes"
+        rows="5"
+        placeholder="Document findings, supporting evidence, and recommended next steps..."
+    ></textarea>
+</div>
+
+<button id="saveInvestigationBtn" type="button">
+    Save Investigation Decision
+</button>
+
+</div>
 </div>
 </div>
 <script>
@@ -513,7 +556,9 @@ const riskText = riskIndicators.join(" | ");
     const reviewButton = row.querySelector(".review-btn");
 
 reviewButton.addEventListener("click", function () {
+    
     const panel = document.getElementById("investigationPanel");
+    panel.dataset.employeeId = employee.EmployeeID;
 
     document.getElementById("investigationEmployee").textContent =
         `${employee.EmployeeName} (${employee.EmployeeID})`;
@@ -720,6 +765,8 @@ const regionFilter = document.getElementById("regionFilter");
 
 const transactionFilter = document.getElementById("transactionFilter");
 
+const saveInvestigationBtn = document.getElementById("saveInvestigationBtn");
+
 transactionFilter.addEventListener("change", function () {
 
     const selectedFilter = transactionFilter.value;
@@ -757,6 +804,34 @@ else if (
 
 });
 
+saveInvestigationBtn.addEventListener("click", function () {
+    const panel = document.getElementById("investigationPanel");
+    const employeeId = panel.dataset.employeeId;
+    const caseStatus = document.getElementById("caseStatus").value;
+    const caseDisposition = document.getElementById("caseDisposition").value;
+    const analystNotes = document.getElementById("analystNotes").value;
+ 
+fetch("/api/investigation/save", {
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+        employee_id: employeeId,
+        case_status: caseStatus,
+        case_disposition: caseDisposition,
+        analyst_notes: analystNotes
+    })
+})
+.then(response => response.json())
+.then(data => {
+    console.log("Investigation saved:", data);
+})
+.catch(error => {
+    console.error("Error saving investigation:", error);
+});
+
+});
 function filterFraudTable() {
     const searchValue = employeeSearch.value.toLowerCase();
     const selectedRegion = regionFilter.value.toLowerCase();
