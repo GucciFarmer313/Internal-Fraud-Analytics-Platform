@@ -469,6 +469,28 @@ td {
     Save Investigation Decision
 </button>
 
+<div class="investigation-history">
+    <h3>Investigation History</h3>
+
+    <p id="noInvestigationHistory">
+        No previous investigation decisions.
+    </p>
+
+    <table id="investigationHistoryTable" style="display: none;">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Case Status</th>
+                <th>Disposition</th>
+                <th>Analyst Notes</th>
+            </tr>
+        </thead>
+
+        <tbody id="investigationHistoryBody">
+        </tbody>
+    </table>
+</div>
+
 </div>
 </div>
 </div>
@@ -583,7 +605,74 @@ document.getElementById("investigationAfterHours").textContent =
 
 document.getElementById("investigationAnomaly").textContent =
     employee.Anomaly_Score.toFixed(3);// Load transaction evidence for selected employee
-const transactionTableBody =
+
+// Load saved investigation decision
+fetch(`/api/investigation/decision/${employee.EmployeeID}`)
+    .then(response => response.json())
+    .then(data => {
+
+        if (data.found) {
+            document.getElementById("caseStatus").value =
+                data.investigation.CaseStatus;
+
+            document.getElementById("caseDisposition").value =
+                data.investigation.CaseDisposition;
+
+            document.getElementById("analystNotes").value =
+                data.investigation.AnalystNotes || "";
+        } else {
+            document.getElementById("caseStatus").value = "under-review";
+            document.getElementById("caseDisposition").selectedIndex = 0;
+            document.getElementById("analystNotes").value = "";
+        }
+
+    })
+    .catch(error => {
+        console.error("Error loading investigation decision:", error);
+    });
+
+// Load investigation history
+fetch(`/api/investigation/history/${employee.EmployeeID}`)
+    .then(response => response.json())
+    .then(data => {
+        const historyTable =
+            document.getElementById("investigationHistoryTable");
+
+        const historyBody =
+            document.getElementById("investigationHistoryBody");
+
+        const noHistory =
+            document.getElementById("noInvestigationHistory");
+
+        historyBody.innerHTML = "";
+
+        if (data.count === 0) {
+            historyTable.style.display = "none";
+            noHistory.style.display = "block";
+            return;
+        }
+
+        noHistory.style.display = "none";
+        historyTable.style.display = "table";
+
+        data.investigations.forEach(investigation => {
+            const row = document.createElement("tr");
+
+            row.innerHTML = `
+                <td>${investigation.CreatedAt || ""}</td>
+                <td>${investigation.CaseStatus || ""}</td>
+                <td>${investigation.CaseDisposition || ""}</td>
+                <td>${investigation.AnalystNotes || ""}</td>
+            `;
+
+            historyBody.appendChild(row);
+        });
+    })
+    .catch(error => {
+        console.error("Error loading investigation history:", error);
+    });
+
+    const transactionTableBody =
     document.getElementById("transactionTableBody");
 
 transactionTableBody.innerHTML = "";

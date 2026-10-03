@@ -2,6 +2,7 @@
 # Flask dashboard for the Internal Sales Fraud Analytics Platform
 
 import os
+import sqlite3
 import pandas as pd
 from flask import Flask, render_template, jsonify, request
 
@@ -10,6 +11,27 @@ app = Flask(__name__)
 DATA_PATH = os.path.join("data", "isolation_forest_results.csv")
 SALES_PATH = os.path.join("data", "sales.csv")
 REFUNDS_PATH = os.path.join("data", "refunds.csv")
+DB_PATH = os.path.join("data", "fraud_analytics.db")
+
+def init_investigation_table():
+    conn = sqlite3.connect(DB_PATH)
+
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS investigations (
+            InvestigationID INTEGER PRIMARY KEY AUTOINCREMENT,
+            EmployeeID TEXT NOT NULL,
+            CaseStatus TEXT NOT NULL,
+            CaseDisposition TEXT,
+            AnalystNotes TEXT,
+            CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UpdatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    conn.commit()
+    conn.close()
+
+init_investigation_table()
 
 def load_data():
     """Load the scored employee data fresh on each request."""
@@ -85,6 +107,67 @@ def api_investigation(employee_id):
         evidence.fillna("").to_dict(orient="records")
     )
 
+@app.route("/api/investigation/decision/<employee_id>")
+def get_investigation_decision(employee_id):
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+
+    investigation = conn.execute("""
+        SELECT
+            InvestigationID,
+            EmployeeID,
+            CaseStatus,
+            CaseDisposition,
+            AnalystNotes,
+            CreatedAt,
+            UpdatedAt
+        FROM investigations
+        WHERE EmployeeID = ?
+        ORDER BY InvestigationID DESC
+        LIMIT 1
+    """, (employee_id,)).fetchone()
+
+    conn.close()
+
+    if investigation is None:
+        return jsonify({
+            "found": False
+        })
+
+    return jsonify({
+        "found": True,
+        "investigation": dict(investigation)
+    })
+
+@app.route("/api/investigation/history/<employee_id>")
+def get_investigation_history(employee_id):
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+
+    investigations = conn.execute("""
+        SELECT
+            InvestigationID,
+            EmployeeID,
+            CaseStatus,
+            CaseDisposition,
+            AnalystNotes,
+            CreatedAt,
+            UpdatedAt
+        FROM investigations
+        WHERE EmployeeID = ?
+        ORDER BY InvestigationID DESC
+    """, (employee_id,)).fetchall()
+
+    conn.close()
+
+    return jsonify({
+        "employee_id": employee_id,
+        "count": len(investigations),
+        "investigations": [
+            dict(investigation) for investigation in investigations
+        ]
+    })
+
 @app.route("/api/investigation/save", methods=["POST"])
 def save_investigation():
 
@@ -100,6 +183,26 @@ def save_investigation():
     print("Case Status:", case_status)
     print("Case Disposition:", case_disposition)
     print("Analyst Notes:", analyst_notes)
+
+    conn = sqlite3.connect(DB_PATH)
+
+    conn.execute("""
+        INSERT INTO investigations (
+            EmployeeID,
+            CaseStatus,
+            CaseDisposition,
+            AnalystNotes
+        )
+        VALUES (?, ?, ?, ?)
+    """, (
+        employee_id,
+        case_status,
+        case_disposition,
+        analyst_notes
+    ))
+
+    conn.commit()
+    conn.close()
 
     return jsonify({
         "success": True,
