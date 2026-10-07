@@ -139,9 +139,8 @@ Rather than automatically determining guilt, the model functions as a **risk-pri
 The project includes a two-page Power BI solution designed for both executive fraud monitoring and detailed investigation analysis.
 
 ### Executive Fraud Monitoring Overview
-
 ![Executive Fraud Monitoring Overview](docs/screenshots/executive_fraud_monitoring.png)
-![Employee Fraud Investigation Details](docs/screenshots/employee_investigation_details.png)
+
 The executive dashboard provides a high-level view of fraud exposure and investigation activity, including:
 
 - Employees analyzed and flagged fraud leads
@@ -154,6 +153,7 @@ The executive dashboard provides a high-level view of fraud exposure and investi
 - Refund rate vs. after-hours activity analysis
 
 ### Employee Fraud Investigation Details
+![Employee Fraud Investigation Details](docs/screenshots/employee_investigation_details.png)
 
 The investigation dashboard allows analysts to select an employee and review:
 
