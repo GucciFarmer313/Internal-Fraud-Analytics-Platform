@@ -16,6 +16,8 @@ Insurance enterprises handle thousands of sales transactions, policy modificatio
 
 This platform combines a real-world dataset (IBM Telco Customer Churn) with synthetically generated Employee, Sales, Calls, Refunds, and Commissions data, deliberately injects realistic fraud scenarios, and applies unsupervised machine learning (Isolation Forest) to flag high-risk employees — with results validated against a known ground truth.
 
+📖 **Portfolio Case Study:** [Read the Full Project Case Study](docs/portfolio_case_study.md)
+
 ---
 
 ## ⚙️ Key Features
