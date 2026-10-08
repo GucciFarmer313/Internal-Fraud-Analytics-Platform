@@ -106,6 +106,7 @@ This platform combines a real-world dataset (IBM Telco Customer Churn) with synt
 │ • Fraud KPIs & investigation outcomes       │
 └─────────────────────────────────────────────┘
 
+```
 ---
 
 ## 📊 Model Results
