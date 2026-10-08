@@ -212,8 +212,8 @@ Internal-Fraud-Analytics-Platform/
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/your-username/internal-sales-fraud-detection.git
-cd internal-sales-fraud-detection
+git clone https://github.com/GucciFarmer313/Internal-Fraud-Analytics-Platform.git
+cd Internal-Fraud-Analytics-Platform
 ```
 
 ### 2. Create and Activate a Virtual Environment
