@@ -18,6 +18,8 @@ env/
 data/*.csv
 data/*.xlsx
 data/raw/
+# Generated SQLite databases
+*.db
 
 # Model files (can be large; track separately if needed)
 models/*.pkl
