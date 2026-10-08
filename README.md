@@ -236,6 +236,7 @@ pip install -r requirements.txt
 ### 4. Generate the Dataset and Run the Pipeline
 ```bash
 python scripts/Generate_employees.py
+python scripts/Telco_Dataset.py
 python scripts/Generate_sales.py
 python scripts/Generate_calls.py
 python scripts/Generate_refunds.py
